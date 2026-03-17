@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Library Shelf</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="site-header">
+        <div class="brand-mark">
+          <img
+            class="brand-logo"
+            src="./fireflies-logo.svg"
+            alt="Fireflies Studio logo"
+          />
+          <div>
+            <p class="eyebrow">Offline Library Catalog</p>
+            <p class="brand-name">Fireflies Studio Library</p>
+          </div>
+        </div>
+        <nav class="site-nav" id="siteNav">
+          <button class="site-nav-link active" data-page="home" type="button">
+            Home
+          </button>
+          <button class="site-nav-link" data-page="catalog" type="button">
+            Catalog
+          </button>
+          <button class="site-nav-link" data-page="about" type="button">
+            About
+          </button>
+        </nav>
+      </header>
+
+      <section class="hero page-section" id="homePage">
+        <div class="hero-copy">
+          <p class="eyebrow">A Reading Space By Fireflies</p>
+          <h1>Stories, ideas, and quiet discoveries for curious readers.</h1>
+          <p class="hero-text">
+            Fireflies Studio Library is a warm reading corner where visitors can
+            browse thoughtfully, follow reader favourites, and discover books
+            that travel from one curious mind to another.
+          </p>
+          <div class="hero-actions">
+            <button class="hero-button" data-page-target="catalog" type="button">
+              Explore The Catalog
+            </button>
+            <button class="hero-button ghost" data-page-target="about" type="button">
+              About Fireflies
+            </button>
+          </div>
+          <div class="hero-stats" id="heroStats"></div>
+        </div>
+
+        <aside class="hero-panel hero-story">
+          <p class="eyebrow">Why Fireflies</p>
+          <h2>A library shaped by shared reading.</h2>
+          <p class="detail-text">
+            Fireflies brings books, people, and conversation together in one
+            welcoming cultural space.
+          </p>
+          <div class="story-grid">
+            <div class="detail-card">
+              <h3>Read Together</h3>
+              <p class="detail-text">
+                Build a habit of browsing, borrowing, and recommending books to others.
+              </p>
+            </div>
+            <div class="detail-card">
+              <h3>Discover Widely</h3>
+              <p class="detail-text">
+                Move across genres, languages, and ideas through a carefully growing collection.
+              </p>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="home-feature page-section" id="featuredWeekSection">
+        <div class="catalog-panel featured-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Book Of The Week</p>
+              <h2 id="featuredWeekTitle">This week’s timely read</h2>
+            </div>
+            <p class="result-count" id="featuredWeekLabel"></p>
+          </div>
+          <div class="featured-layout" id="featuredWeekContent"></div>
+        </div>
+      </section>
+
+      <section class="hero page-section hidden" id="catalogPage">
+        <div class="hero-copy">
+          <p class="eyebrow">Browse The Collection</p>
+          <h1>Find books by title, mood, genre, or reader buzz.</h1>
+          <p class="hero-text">
+            Start with top-rated discoveries, refine by genre or availability,
+            and open any title for a crisp summary and reader rating.
+          </p>
+          <div class="brand-mark">
+            <div class="hero-stats" id="heroStatsDuplicate"></div>
+          </div>
+        </div>
+
+        <aside class="hero-panel">
+          <h2>Find a book fast</h2>
+          <div class="view-switcher" id="viewSwitcher">
+            <button class="view-tab active" data-view="catalog" type="button">
+              Catalog View
+            </button>
+            <button class="view-tab" data-view="genres" type="button">
+              Browse by Genre
+            </button>
+          </div>
+          <label class="control">
+            <span>Search by title, author, or tag</span>
+            <input
+              id="searchInput"
+              type="search"
+              placeholder="Try: science, mystery, Rowling"
+            />
+          </label>
+
+          <div class="filter-row">
+            <label class="control">
+              <span>Genre</span>
+              <select id="genreFilter"></select>
+            </label>
+            <label class="control">
+              <span>Status</span>
+              <select id="statusFilter">
+                <option value="all">All</option>
+                <option value="available">Available</option>
+                <option value="checked-out">Checked Out</option>
+                <option value="reference-only">Reference Only</option>
+              </select>
+            </label>
+          </div>
+        </aside>
+      </section>
+
+      <main class="catalog-layout page-section hidden" id="catalogLayout">
+        <section class="catalog-panel" id="catalogView">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Catalog</p>
+              <h2>Books in collection</h2>
+            </div>
+            <p class="result-count" id="resultCount"></p>
+          </div>
+          <div class="book-grid" id="bookGrid"></div>
+          <div class="pagination-bar" id="paginationBar">
+            <button class="page-button" id="prevPageButton" type="button">
+              Previous
+            </button>
+            <p class="page-status" id="pageStatus"></p>
+            <button class="page-button" id="nextPageButton" type="button">
+              Next
+            </button>
+          </div>
+          <p class="empty-state hidden" id="emptyState">
+            No books match the current filters.
+          </p>
+        </section>
+
+        <section class="catalog-panel hidden" id="genresView">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Genres</p>
+              <h2>Browse the collection by subject</h2>
+            </div>
+            <p class="result-count" id="genreSummary"></p>
+          </div>
+          <div class="genre-sections" id="genreSections"></div>
+        </section>
+
+        <aside class="details-panel" id="detailsPanel">
+          <p class="eyebrow">Book Details</p>
+          <div id="detailsContent"></div>
+        </aside>
+      </main>
+
+      <section class="about-layout page-section hidden" id="aboutPage">
+        <section class="catalog-panel about-copy">
+          <p class="eyebrow">About Fireflies</p>
+          <h2>Books, place-making, and quiet cultural exchange.</h2>
+          <p class="hero-text">
+            Fireflies Studio Library is imagined as more than a catalog. It is
+            a reading room, a neighbourhood cultural pause, and a growing
+            collection that encourages people to spend time with stories, ideas,
+            and each other.
+          </p>
+          <div class="about-cards">
+            <div class="detail-card">
+              <h3>Vision</h3>
+              <p class="detail-text">
+                To make reading feel social, generous, and alive by creating a
+                space where knowledge passes from hand to hand and curiosity is
+                part of everyday life.
+              </p>
+            </div>
+            <div class="detail-card">
+              <h3>The Library</h3>
+              <p class="detail-text">
+                The library brings together fiction, philosophy, children’s
+                books, poetry, science, history, and more, inviting visitors to
+                discover both familiar voices and unexpected ones.
+              </p>
+            </div>
+          </div>
+          <div class="detail-card">
+            <h3>Visit Us</h3>
+            <p class="detail-text">
+              405, Ghatikia - Nh5, Kalinga Vihar LIG, Kalinganagar, Bhubaneswar,
+              Subudhipur, Odisha 751028
+            </p>
+          </div>
+          <div class="about-links">
+            <a class="hero-button" href="https://www.detourodisha.com" target="_blank" rel="noreferrer">
+              Visit Detour Odisha
+            </a>
+            <a class="hero-button ghost" href="https://maps.app.goo.gl/KM6omcqNd8kn2epbA" target="_blank" rel="noreferrer">
+              Open In Google Maps
+            </a>
+          </div>
+        </section>
+
+        <aside class="catalog-panel map-panel">
+          <p class="eyebrow">Location</p>
+          <h2>Find the library</h2>
+          <div class="map-frame">
+            <iframe
+              title="Fireflies Studio Library location"
+              src="https://www.google.com/maps?q=405%2C%20Ghatikia%20-%20Nh5%2C%20Kalinga%20Vihar%20LIG%2C%20Kalinganagar%2C%20Bhubaneswar%2C%20Subudhipur%2C%20Odisha%20751028&output=embed"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+            ></iframe>
+          </div>
+        </aside>
+      </section>
+
+      <footer class="site-footer">
+        <p class="footer-copy">Fireflies Studio Library by <a href="https://www.detourodisha.com" target="_blank" rel="noreferrer">Detour Odisha</a></p>
+        <div class="footer-links">
+          <a href="https://www.instagram.com/firefliesbydetour/" target="_blank" rel="noreferrer" aria-label="Fireflies Instagram">
+            <span class="social-icon">◎</span>
+            Instagram
+          </a>
+          <a href="https://maps.app.goo.gl/KM6omcqNd8kn2epbA" target="_blank" rel="noreferrer">
+            Location
+          </a>
+        </div>
+      </footer>
+    </div>
+
+    <script src="./books-data.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
