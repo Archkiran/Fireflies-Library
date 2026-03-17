@@ -4,6 +4,7 @@ const searchInput = document.getElementById("searchInput");
 const genreFilter = document.getElementById("genreFilter");
 const statusFilter = document.getElementById("statusFilter");
 const resultCount = document.getElementById("resultCount");
+const searchSummary = document.getElementById("searchSummary");
 const bookGrid = document.getElementById("bookGrid");
 const emptyState = document.getElementById("emptyState");
 const detailsContent = document.getElementById("detailsContent");
@@ -25,6 +26,11 @@ const heroStatsDuplicate = document.getElementById("heroStatsDuplicate");
 const featuredWeekTitle = document.getElementById("featuredWeekTitle");
 const featuredWeekLabel = document.getElementById("featuredWeekLabel");
 const featuredWeekContent = document.getElementById("featuredWeekContent");
+const featuredWeekSection = document.getElementById("featuredWeekSection");
+const themeChipRow = document.getElementById("themeChipRow");
+const homeThemeRow = document.getElementById("homeThemeRow");
+const curatedShelves = document.getElementById("curatedShelves");
+const homeCurationSection = document.getElementById("homeCurationSection");
 
 const accentPalette = [
   "#4f6d7a",
@@ -82,12 +88,22 @@ const BOOK_OF_WEEK = {
   kicker: "A timely read for uncertain times"
 };
 
+const QUICK_THEMES = [
+  { id: "all", label: "Everything" },
+  { id: "young-readers", label: "Young Readers" },
+  { id: "deep-thinking", label: "Deep Thinking" },
+  { id: "poetry-corner", label: "Poetry Corner" },
+  { id: "nature-shelf", label: "Nature Shelf" },
+  { id: "gentle-reads", label: "Gentle Reads" }
+];
+
 const state = {
   selectedBookId: books[0]?.id ?? null,
   currentPage: 1,
   activeView: "catalog",
   expandedGenres: {},
-  activePage: "home"
+  activePage: "home",
+  activeTheme: "all"
 };
 
 function loadCoverCache() {
@@ -224,23 +240,28 @@ function summarizeText(text, minWords = 50, maxWords = 75) {
 }
 
 function buildFallbackSummary(book) {
-  const parts = [
-    book.title ? `${book.title} is part of the Fireflies Studio library` : "",
+  const sentenceParts = [
+    book.title ? `${book.title} is a ${book.genre ? book.genre.toLowerCase() : "library"} title in the Fireflies Studio collection` : "",
     book.author ? `written by ${book.author}` : "",
-    book.genre ? `and grouped under ${book.genre}` : "",
-    book.language ? `This edition is in ${book.language}` : "",
-    book.translator ? `with translation support by ${book.translator}` : "",
-    book.publisher ? `Published by ${book.publisher}` : "",
-    book.published ? `around ${book.published}` : "",
-    book.notes ? `Additional catalog notes mention ${book.notes}` : ""
+    book.language ? `This copy is available in ${book.language}` : "",
+    book.translator ? `and includes translation details linked to ${book.translator}` : "",
+    book.publisher ? `The edition is associated with ${book.publisher}` : "",
+    book.published ? `and dates to around ${book.published}` : "",
+    book.notes ? `Catalog notes mention ${book.notes}` : "",
+    `It has been selected as part of a shelf meant for slow browsing, shared discovery, and thoughtful borrowing among visitors.`
   ].filter(Boolean);
 
-  if (parts.length === 0) {
-    return "A thoughtfully selected title from the Fireflies Studio library collection, chosen for browsing, borrowing, and quiet reading in the space.";
-  }
+  const summary = sentenceParts.join(". ").replace(/\.\s+\./g, ". ");
+  return summarizeText(summary, 45, 72) || summary;
+}
 
-  const summary = `${parts.join(". ")}. Visitors can explore this title as part of the library's curated collection.`;
-  return summarizeText(summary, 35, 65) || summary;
+function getBookSummary(book) {
+  const candidate =
+    book.generatedSummary ||
+    summarizeText(book.summary, 45, 72) ||
+    buildFallbackSummary(book);
+
+  return candidate;
 }
 
 async function fetchJson(url) {
@@ -510,7 +531,7 @@ function createDetailItem(label, value) {
 
 function formatRating(book) {
   if (!book.rating) {
-    return "Rating unavailable";
+    return "No web rating yet";
   }
 
   const count = book.ratingsCount
@@ -518,6 +539,113 @@ function formatRating(book) {
     : "";
   const source = book.ratingSource ? ` via ${book.ratingSource}` : "";
   return `${book.rating}/5${count}${source}`;
+}
+
+function formatAvailability(status) {
+  const mapping = {
+    available: "Available to borrow",
+    "checked-out": "Currently borrowed",
+    "reference-only": "Read in library"
+  };
+
+  return mapping[status] || formatStatus(status);
+}
+
+function matchesTheme(book, themeId) {
+  const genre = normalizeText(book.genre);
+  const title = normalizeText(book.title);
+  const author = normalizeText(book.author);
+
+  switch (themeId) {
+    case "young-readers":
+      return genre.includes("children") || author.includes("geronimo stilton");
+    case "deep-thinking":
+      return genre.includes("philosophy") || genre.includes("religion") || genre.includes("science");
+    case "poetry-corner":
+      return genre.includes("poetry");
+    case "nature-shelf":
+      return genre.includes("nature") || title.includes("birds") || title.includes("flowers");
+    case "gentle-reads":
+      return author.includes("ruskin bond") || title.includes("little book") || title.includes("flowers");
+    default:
+      return true;
+  }
+}
+
+function renderThemeChips() {
+  const markup = QUICK_THEMES.map(
+    (theme) => `
+      <button class="theme-chip ${theme.id === state.activeTheme ? "active" : ""}" data-theme="${theme.id}" type="button">
+        ${theme.label}
+      </button>
+    `
+  ).join("");
+
+  themeChipRow.innerHTML = markup;
+  homeThemeRow.innerHTML = markup;
+}
+
+function getCuratedShelvesData() {
+  const byFeaturedAuthors = books
+    .filter((book) => getAuthorFeatureScore(book) > 0)
+    .sort((left, right) => getAuthorFeatureScore(right) - getAuthorFeatureScore(left))
+    .slice(0, 4);
+  const youngReaders = books.filter((book) => matchesTheme(book, "young-readers")).slice(0, 4);
+  const poetryCorner = books.filter((book) => matchesTheme(book, "poetry-corner")).slice(0, 4);
+  const gifting = books
+    .filter((book) => matchesTheme(book, "gentle-reads") || (book.rating ?? 0) >= 4)
+    .slice(0, 4);
+
+  return [
+    {
+      title: "Staff Picks",
+      description: "Recognizable authors and inviting books for an easy first browse.",
+      books: byFeaturedAuthors
+    },
+    {
+      title: "Young Readers",
+      description: "Friendly, imaginative titles for children, teens, and family reading.",
+      books: youngReaders
+    },
+    {
+      title: "Poetry Corner",
+      description: "Short, reflective books for slower reading and quiet return visits.",
+      books: poetryCorner
+    },
+    {
+      title: "Good To Gift",
+      description: "Thoughtful recommendations that make warm introductions and conversation starters.",
+      books: gifting
+    }
+  ];
+}
+
+function renderCuratedShelves() {
+  curatedShelves.innerHTML = getCuratedShelvesData()
+    .map(
+      (shelf) => `
+        <section class="curated-shelf">
+          <h3>${escapeHtml(shelf.title)}</h3>
+          <p class="detail-text">${escapeHtml(shelf.description)}</p>
+          <div class="curated-shelf-grid">
+            ${shelf.books
+              .map(
+                (book) => `
+                  <article class="mini-book-card" data-book-id="${book.id}">
+                    <h3>${escapeHtml(book.title)}</h3>
+                    <p class="meta-text">${escapeHtml(book.author)}</p>
+                    <div class="detail-meta">
+                      <span class="tag">${escapeHtml(book.genre)}</span>
+                    </div>
+                  </article>
+                `
+              )
+              .join("")}
+          </div>
+        </section>
+      `
+    )
+    .join("");
 }
 
 function renderBookOfTheWeek() {
@@ -560,7 +688,7 @@ function renderBookOfTheWeek() {
       </div>
       <div class="detail-card">
         <h3>Why read it now</h3>
-        <p class="detail-text">${escapeHtml(featuredBook.generatedSummary || buildFallbackSummary(featuredBook))}</p>
+        <p class="detail-text">${escapeHtml(getBookSummary(featuredBook))}</p>
       </div>
       <div class="hero-actions">
         <button class="hero-button" data-page-target="catalog" data-featured-book-id="${featuredBook.id}" type="button">
@@ -663,7 +791,9 @@ function getFilteredBooks() {
     const matchesStatus =
       selectedStatus === "all" || book.status === selectedStatus;
 
-    return matchesSearch && matchesGenre && matchesStatus;
+    const matchesQuickTheme = matchesTheme(book, state.activeTheme);
+
+    return matchesSearch && matchesGenre && matchesStatus && matchesQuickTheme;
   });
 
   return filteredBooks.sort((left, right) => {
@@ -714,12 +844,14 @@ function renderBooks() {
   const filteredBooks = getFilteredBooks();
   const paginated = getVisibleBooks(filteredBooks);
   resultCount.textContent = `${filteredBooks.length} result${filteredBooks.length === 1 ? "" : "s"}`;
+  searchSummary.textContent = buildSearchSummary(filteredBooks.length);
 
   if (!filteredBooks.some((book) => book.id === state.selectedBookId)) {
     state.selectedBookId = filteredBooks[0]?.id ?? null;
   }
 
   emptyState.classList.toggle("hidden", filteredBooks.length > 0);
+  searchSummary.classList.toggle("hidden", filteredBooks.length === 0);
 
   bookGrid.innerHTML = paginated.books
     .map(
@@ -730,7 +862,7 @@ function renderBooks() {
           <p class="meta-text">${book.author}</p>
           <div class="meta-row">
             <span class="tag">${book.genre}</span>
-            <span class="status-badge ${book.status}">${formatStatus(book.status)}</span>
+            <span class="status-badge ${book.status}">${formatAvailability(book.status)}</span>
           </div>
           <p class="meta-text">${book.language || "Language TBD"} • ${formatRating(book)}</p>
         </article>
@@ -749,6 +881,32 @@ function renderBooks() {
   renderDetails(filteredBooks);
   paginated.books.forEach(scheduleCoverLookup);
   paginated.books.forEach(scheduleMetadataLookup);
+}
+
+function buildSearchSummary(resultCountValue) {
+  const parts = [];
+
+  if (searchInput.value.trim()) {
+    parts.push(`matching "${searchInput.value.trim()}"`);
+  }
+  if (genreFilter.value !== "all") {
+    parts.push(`in ${genreFilter.value}`);
+  }
+  if (statusFilter.value !== "all") {
+    parts.push(`${formatAvailability(statusFilter.value).toLowerCase()}`);
+  }
+  if (state.activeTheme !== "all") {
+    const theme = QUICK_THEMES.find((item) => item.id === state.activeTheme);
+    if (theme) {
+      parts.push(`under ${theme.label.toLowerCase()}`);
+    }
+  }
+
+  if (parts.length === 0) {
+    return `${resultCountValue} books ready to explore.`;
+  }
+
+  return `${resultCountValue} books ${parts.join(", ")}.`;
 }
 
 function renderGenresView() {
@@ -794,7 +952,7 @@ function renderGenresView() {
                       <p class="genre-book-meta">${escapeHtml(book.author)} • ${escapeHtml(book.language || "Language TBD")}</p>
                     </div>
                     <div class="detail-meta">
-                      <span class="status-badge ${book.status}">${formatStatus(book.status)}</span>
+                      <span class="status-badge ${book.status}">${formatAvailability(book.status)}</span>
                       <span class="tag">${escapeHtml(formatRating(book))}</span>
                     </div>
                   </article>
@@ -842,6 +1000,8 @@ function renderActivePage() {
   const isAbout = state.activePage === "about";
 
   homePage.classList.toggle("hidden", !isHome);
+  featuredWeekSection.classList.toggle("hidden", !isHome);
+  homeCurationSection.classList.toggle("hidden", !isHome);
   catalogPage.classList.toggle("hidden", !isCatalog);
   catalogLayout.classList.toggle("hidden", !isCatalog);
   aboutPage.classList.toggle("hidden", !isAbout);
@@ -855,6 +1015,7 @@ function renderActivePage() {
   }
 
   if (isHome) {
+    renderCuratedShelves();
     renderBookOfTheWeek();
   }
 }
@@ -881,19 +1042,25 @@ function renderDetails(filteredBooks) {
         <p class="meta-text">${selectedBook.author}</p>
         <div class="detail-meta">
           <span class="tag">${selectedBook.genre}</span>
-          <span class="status-badge ${selectedBook.status}">${formatStatus(selectedBook.status)}</span>
+          <span class="status-badge ${selectedBook.status}">${formatAvailability(selectedBook.status)}</span>
           <span class="tag">${escapeHtml(formatRating(selectedBook))}</span>
         </div>
       </div>
 
       <div class="detail-card">
         <h3>Summary</h3>
-        <p class="detail-text">${escapeHtml(selectedBook.generatedSummary || selectedBook.summary)}</p>
+        <p class="detail-text">${escapeHtml(getBookSummary(selectedBook))}</p>
       </div>
 
       <div class="detail-card">
-        <h3>Library Info</h3>
+        <h3>Why It Stands Out</h3>
+        <p class="detail-text">${escapeHtml(buildWhyItStandsOut(selectedBook))}</p>
+      </div>
+
+      <div class="detail-card">
+        <h3>Edition Details</h3>
         <div class="detail-list">
+          ${createDetailItem("Availability", formatAvailability(selectedBook.status))}
           ${createDetailItem("Reader rating", formatRating(selectedBook))}
           ${createDetailItem("Copies", String(selectedBook.copies || 1))}
           ${createDetailItem("Language", selectedBook.language)}
@@ -926,8 +1093,52 @@ function renderDetails(filteredBooks) {
           ${selectedBook.tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}
         </div>
       </div>
+
+      <div class="detail-card">
+        <h3>Author Spotlight</h3>
+        <p class="detail-text">${escapeHtml(buildAuthorSpotlight(selectedBook))}</p>
+      </div>
+
+      <div class="detail-card">
+        <h3>Similar Picks</h3>
+        <div class="detail-meta">
+          ${getSimilarBooks(selectedBook)
+            .map(
+              (book) => `<button class="theme-chip related-book-chip" data-related-book-id="${book.id}" type="button">${escapeHtml(book.title)}</button>`
+            )
+            .join("")}
+        </div>
+      </div>
     </div>
   `;
+}
+
+function buildAuthorSpotlight(book) {
+  const sameAuthor = books.filter((entry) => normalizeText(entry.author) === normalizeText(book.author));
+  const genres = new Set(sameAuthor.map((entry) => entry.genre).filter(Boolean));
+
+  if (sameAuthor.length <= 1) {
+    return `${book.author} appears in the Fireflies collection as a distinctive voice worth exploring further. This title is a good starting point for visitors discovering their work.`;
+  }
+
+  return `${book.author} appears ${sameAuthor.length} times in the Fireflies collection across ${genres.size} genre${genres.size === 1 ? "" : "s"}, making this author a strong thread for readers who enjoy following a voice across different books.`;
+}
+
+function getSimilarBooks(book) {
+  return books
+    .filter((entry) => entry.id !== book.id && entry.genre === book.genre)
+    .sort((left, right) => (right.rating ?? 0) - (left.rating ?? 0))
+    .slice(0, 3);
+}
+
+function buildWhyItStandsOut(book) {
+  const lines = [
+    book.genre ? `A strong choice for readers drawn to ${book.genre.toLowerCase()}.` : "",
+    book.language ? `This edition is available in ${book.language}.` : "",
+    book.rating ? `It also carries a visible web reader rating, making it an easy recommendation for new visitors.` : `It is a good candidate for discovery if you like finding less obvious titles in a physical library.`
+  ].filter(Boolean);
+
+  return lines.join(" ");
 }
 
 function attachEvents() {
@@ -1042,6 +1253,33 @@ function attachEvents() {
   });
 
   document.addEventListener("click", (event) => {
+    const themeButton = event.target.closest(".theme-chip");
+    if (themeButton?.dataset.theme) {
+      state.activeTheme = themeButton.dataset.theme;
+      state.currentPage = 1;
+      if (themeButton.closest("#homeThemeRow")) {
+        state.activePage = "catalog";
+      }
+      renderThemeChips();
+      renderActivePage();
+      return;
+    }
+
+    const curatedBook = event.target.closest("[data-book-id]");
+    if (curatedBook) {
+      state.selectedBookId = Number(curatedBook.dataset.bookId);
+      state.activePage = "catalog";
+      renderActivePage();
+      return;
+    }
+
+    const relatedBook = event.target.closest("[data-related-book-id]");
+    if (relatedBook) {
+      state.selectedBookId = Number(relatedBook.dataset.relatedBookId);
+      renderActiveView();
+      return;
+    }
+
     const button = event.target.closest("[data-page-target]");
     if (!button) {
       return;
@@ -1057,6 +1295,7 @@ function attachEvents() {
 
 if (books.length > 0) {
   books.forEach((book) => {
+    book.generatedSummary = getBookSummary(book);
     if (coverCache[book.id]) {
       book.coverImage = coverCache[book.id];
     }
@@ -1065,6 +1304,7 @@ if (books.length > 0) {
     }
   });
   buildGenreOptions();
+  renderThemeChips();
   renderHeroStats();
   attachEvents();
   renderActivePage();
