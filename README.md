@@ -28,6 +28,41 @@ The app reads book records from:
 
 If you replace the spreadsheet later, I can regenerate `books-data.js` again.
 
+## Edit content without touching app logic
+
+These files are meant for manual updates:
+
+- `/Users/kiranpalatasingh/Documents/New project/content.js`
+  Use this for homepage text, About page text, footer text, section headings, and button labels.
+
+- `/Users/kiranpalatasingh/Documents/New project/curation.js`
+  Use this for:
+  - Book of the Week
+  - featured authors
+  - homepage shelves
+  - quick themes
+
+- `/Users/kiranpalatasingh/Documents/New project/book-overrides.js`
+  Use this for manual book-level overrides such as:
+  - `summary`
+  - `whyItStandsOut`
+  - `authorSpotlight`
+
+## Resize boxes and elements
+
+Open `/Users/kiranpalatasingh/Documents/New project/styles.css` and edit the CSS variables at the top:
+
+- `--hero-gap`
+- `--hero-padding`
+- `--hero-title-max`
+- `--hero-title-size`
+- `--book-card-cover-height`
+- `--detail-cover-height`
+- `--panel-padding`
+- `--card-padding`
+
+Those variables control most of the big layout and sizing decisions without needing to search through the whole stylesheet.
+
 Each book supports:
 
 - `catalogCode`

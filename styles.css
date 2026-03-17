@@ -13,6 +13,14 @@
   --radius-xl: 28px;
   --radius-lg: 20px;
   --radius-md: 16px;
+  --hero-gap: 24px;
+  --hero-padding: 28px;
+  --hero-title-max: 8.5ch;
+  --hero-title-size: clamp(2.3rem, 3.7vw, 3.8rem);
+  --book-card-cover-height: 220px;
+  --detail-cover-height: 320px;
+  --panel-padding: 26px;
+  --card-padding: 18px;
 }
 
 * {
@@ -29,6 +37,66 @@ body {
     radial-gradient(circle at top right, rgba(46, 102, 89, 0.15), transparent 24%),
     linear-gradient(180deg, #fcf6ee 0%, var(--bg) 100%);
   animation: pageEnter 500ms ease;
+}
+
+.cursor-orbit {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.9;
+  mix-blend-mode: multiply;
+}
+
+.firefly-glow,
+.firefly-wing,
+.firefly-body {
+  position: absolute;
+  display: block;
+  transform: translate(-50%, -50%);
+}
+
+.firefly-glow {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(241, 225, 149, 0.7), rgba(241, 225, 149, 0.04));
+  box-shadow: 0 0 24px rgba(241, 225, 149, 0.32);
+  animation: fireflyPulse 1.8s ease-in-out infinite;
+}
+
+.firefly-wing {
+  width: 10px;
+  height: 7px;
+  border-radius: 10px 10px 8px 8px;
+  background: rgba(255, 248, 230, 0.92);
+  box-shadow: 0 0 8px rgba(255, 248, 230, 0.22);
+  transform-origin: center bottom;
+  animation: wingFlap 0.9s ease-in-out infinite;
+}
+
+.firefly-wing-left {
+  margin-left: -5px;
+  margin-top: -4px;
+  transform: translate(-50%, -50%) rotate(-24deg);
+}
+
+.firefly-wing-right {
+  margin-left: 5px;
+  margin-top: -4px;
+  transform: translate(-50%, -50%) rotate(24deg);
+  animation-delay: 0.08s;
+}
+
+.firefly-body {
+  width: 8px;
+  height: 12px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, var(--accent), #7c2d17 60%, #f1e195 100%);
+  box-shadow: 0 0 8px rgba(167, 63, 35, 0.2);
 }
 
 button,
@@ -95,8 +163,8 @@ select {
 .hero {
   display: grid;
   grid-template-columns: 1.2fr 0.98fr;
-  gap: 24px;
-  padding: 28px;
+  gap: var(--hero-gap);
+  padding: var(--hero-padding);
   border-radius: var(--radius-xl);
   margin-bottom: 28px;
 }
@@ -139,8 +207,8 @@ h3 {
 }
 
 h1 {
-  font-size: clamp(2.3rem, 3.7vw, 3.8rem);
-  max-width: 8.5ch;
+  font-size: var(--hero-title-size);
+  max-width: var(--hero-title-max);
   line-height: 0.96;
 }
 
@@ -491,7 +559,7 @@ h2 {
 
 .catalog-panel,
 .details-panel {
-  padding: 26px;
+  padding: var(--panel-padding);
 }
 
 .section-heading {
@@ -534,12 +602,12 @@ h2 {
 }
 
 .book-card-cover {
-  min-height: 220px;
+  min-height: var(--book-card-cover-height);
   margin-bottom: 14px;
 }
 
 .detail-cover {
-  min-height: 320px;
+  min-height: var(--detail-cover-height);
   margin-bottom: 20px;
 }
 
@@ -640,7 +708,7 @@ h2 {
 }
 
 .detail-card {
-  padding: 18px;
+  padding: var(--card-padding);
   border-radius: var(--radius-md);
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.66);
@@ -767,6 +835,28 @@ h2 {
   }
 }
 
+@keyframes fireflyPulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(0.92);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes wingFlap {
+  0%,
+  100% {
+    opacity: 0.78;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .pagination-bar {
   display: flex;
   justify-content: space-between;
@@ -884,6 +974,10 @@ h2 {
 
   .featured-layout {
     grid-template-columns: 1fr;
+  }
+
+  .cursor-orbit {
+    display: none;
   }
 }
 

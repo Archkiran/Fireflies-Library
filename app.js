@@ -1,4 +1,7 @@
 const books = Array.isArray(window.BOOKS_DATA) ? window.BOOKS_DATA : [];
+const siteContent = window.SITE_CONTENT || {};
+const siteCuration = window.SITE_CURATION || {};
+const bookOverrides = window.BOOK_OVERRIDES || {};
 
 const searchInput = document.getElementById("searchInput");
 const genreFilter = document.getElementById("genreFilter");
@@ -31,6 +34,7 @@ const themeChipRow = document.getElementById("themeChipRow");
 const homeThemeRow = document.getElementById("homeThemeRow");
 const curatedShelves = document.getElementById("curatedShelves");
 const homeCurationSection = document.getElementById("homeCurationSection");
+const cursorOrbit = document.getElementById("cursorOrbit");
 
 const accentPalette = [
   "#4f6d7a",
@@ -57,44 +61,10 @@ let activeMetadataLookups = 0;
 const maxConcurrentLookups = 2;
 const BOOKS_PER_PAGE = 12;
 const GENRE_PREVIEW_COUNT = 5;
-const FEATURED_AUTHORS = [
-  "J. K. Rowling",
-  "J.K. Rowling",
-  "Ruskin Bond",
-  "Dalai Lama",
-  "J. Krishnamurti",
-  "Devdutt Pattanaik",
-  "Richard Dawkins",
-  "Leo Tolstoy",
-  "Morgan Housel",
-  "Hermann Hesse",
-  "Gulzar",
-  "Geronimo Stilton",
-  "David Bohm",
-  "Yuval Noah Harari",
-  "Matt Haig",
-  "James Clear",
-  "Stephen Hawking",
-  "J.R.R. Tolkien",
-  "Alex Michaelides",
-  "Tara Westover"
-];
-
-const BOOK_OF_WEEK = {
-  weekLabel: "Week of March 17, 2026",
-  title: "The Psychology of Money",
-  theme:
-    "Chosen for this week because global headlines have been dominated by war-linked oil shocks, market nerves, and conversations about uncertainty. This title offers an accessible lens on how people respond to volatility, fear, and decision-making under pressure.",
-  kicker: "A timely read for uncertain times"
-};
-
-const QUICK_THEMES = [
-  { id: "all", label: "Everything" },
-  { id: "young-readers", label: "Young Readers" },
-  { id: "deep-thinking", label: "Deep Thinking" },
-  { id: "poetry-corner", label: "Poetry Corner" },
-  { id: "nature-shelf", label: "Nature Shelf" },
-  { id: "gentle-reads", label: "Gentle Reads" }
+const FEATURED_AUTHORS = siteCuration.featuredAuthors || [];
+const BOOK_OF_WEEK = siteCuration.bookOfTheWeek || {};
+const QUICK_THEMES = siteCuration.quickThemes || [
+  { id: "all", label: "Everything" }
 ];
 
 const state = {
@@ -104,6 +74,10 @@ const state = {
   expandedGenres: {},
   activePage: "home",
   activeTheme: "all"
+};
+
+const renderState = {
+  queued: false
 };
 
 function loadCoverCache() {
@@ -138,6 +112,18 @@ function saveMetadataCache() {
   } catch {
     // Ignore storage errors so the catalog remains usable.
   }
+}
+
+function requestRender() {
+  if (renderState.queued) {
+    return;
+  }
+
+  renderState.queued = true;
+  window.requestAnimationFrame(() => {
+    renderState.queued = false;
+    renderActivePage();
+  });
 }
 
 function normalizeText(value) {
@@ -240,6 +226,10 @@ function summarizeText(text, minWords = 50, maxWords = 75) {
 }
 
 function buildFallbackSummary(book) {
+  if (bookOverrides[book.title]?.summary) {
+    return bookOverrides[book.title].summary;
+  }
+
   const sentenceParts = [
     book.title ? `${book.title} is a ${book.genre ? book.genre.toLowerCase() : "library"} title in the Fireflies Studio collection` : "",
     book.author ? `written by ${book.author}` : "",
@@ -380,7 +370,7 @@ function scheduleMetadataLookup(book) {
     !book ||
     metadataCache[book.id] === null ||
     metadataLookupQueue.includes(book.id) ||
-    (book.generatedSummary && book.rating)
+    (book.generatedSummary && (book.rating || metadataCache[book.id]))
   ) {
     return;
   }
@@ -440,7 +430,7 @@ async function runMetadataQueue() {
         Object.assign(book, data);
         metadataCache[book.id] = data;
         saveMetadataCache();
-        renderActiveView();
+        requestRender();
       })
       .finally(() => {
         activeMetadataLookups -= 1;
@@ -483,7 +473,7 @@ async function runCoverQueue() {
           coverCache[book.id] = null;
         }
         saveCoverCache();
-        renderActiveView();
+        requestRender();
       })
       .finally(() => {
         activeCoverLookups -= 1;
@@ -586,38 +576,37 @@ function renderThemeChips() {
 }
 
 function getCuratedShelvesData() {
-  const byFeaturedAuthors = books
-    .filter((book) => getAuthorFeatureScore(book) > 0)
-    .sort((left, right) => getAuthorFeatureScore(right) - getAuthorFeatureScore(left))
-    .slice(0, 4);
-  const youngReaders = books.filter((book) => matchesTheme(book, "young-readers")).slice(0, 4);
-  const poetryCorner = books.filter((book) => matchesTheme(book, "poetry-corner")).slice(0, 4);
-  const gifting = books
-    .filter((book) => matchesTheme(book, "gentle-reads") || (book.rating ?? 0) >= 4)
-    .slice(0, 4);
+  const configuredShelves = siteCuration.shelves || [];
 
-  return [
-    {
-      title: "Staff Picks",
-      description: "Recognizable authors and inviting books for an easy first browse.",
-      books: byFeaturedAuthors
-    },
-    {
-      title: "Young Readers",
-      description: "Friendly, imaginative titles for children, teens, and family reading.",
-      books: youngReaders
-    },
-    {
-      title: "Poetry Corner",
-      description: "Short, reflective books for slower reading and quiet return visits.",
-      books: poetryCorner
-    },
-    {
-      title: "Good To Gift",
-      description: "Thoughtful recommendations that make warm introductions and conversation starters.",
-      books: gifting
+  return configuredShelves.map((shelf) => {
+    let shelfBooks = [];
+
+    if (shelf.mode === "featured-authors") {
+      shelfBooks = books
+        .filter((book) => getAuthorFeatureScore(book) > 0)
+        .sort((left, right) => getAuthorFeatureScore(right) - getAuthorFeatureScore(left))
+        .slice(0, 4);
+    } else if (shelf.mode === "theme") {
+      shelfBooks = books.filter((book) => matchesTheme(book, shelf.themeId)).slice(0, 4);
+    } else if (shelf.mode === "mixed-gentle") {
+      shelfBooks = books
+        .filter((book) => matchesTheme(book, "gentle-reads") || (book.rating ?? 0) >= 4)
+        .slice(0, 4);
+    } else if (Array.isArray(shelf.titles)) {
+      shelfBooks = shelf.titles
+        .map((title) =>
+          books.find((book) => normalizeText(book.title) === normalizeText(title))
+        )
+        .filter(Boolean)
+        .slice(0, 4);
     }
-  ];
+
+    return {
+      title: shelf.title,
+      description: shelf.description,
+      books: shelfBooks
+    };
+  });
 }
 
 function renderCuratedShelves() {
@@ -702,6 +691,84 @@ function renderBookOfTheWeek() {
       </div>
     </div>
   `;
+}
+
+function scheduleBooksForCurrentView(booksToSchedule) {
+  booksToSchedule.forEach(scheduleCoverLookup);
+  booksToSchedule.forEach(scheduleMetadataLookup);
+}
+
+function applySiteContent() {
+  document.querySelector("#homePage .hero-copy .eyebrow").textContent =
+    siteContent.home?.eyebrow || "A Reading Space By Fireflies";
+  document.querySelector("#homePage .hero-copy h1").textContent =
+    siteContent.home?.title || "Stories, ideas, and quiet discoveries for curious readers.";
+  document.querySelector("#homePage .hero-copy .hero-text").textContent =
+    siteContent.home?.text ||
+    "Fireflies Studio Library is a warm reading corner where visitors can browse thoughtfully, follow reader favourites, and discover books that travel from one curious mind to another.";
+  document.querySelector("#homePage .hero-note p").textContent =
+    siteContent.home?.note ||
+    "Browse slowly. Borrow thoughtfully. Let one good book lead to the next.";
+  document.querySelector('[data-page-target="catalog"]').textContent =
+    siteContent.home?.primaryCta || "Explore The Catalog";
+  document.querySelector('[data-page-target="about"]').textContent =
+    siteContent.home?.secondaryCta || "About Fireflies";
+
+  document.querySelector("#homePage .hero-story .eyebrow").textContent =
+    siteContent.whyFireflies?.eyebrow || "Why Fireflies";
+  document.querySelector("#homePage .hero-story h2").textContent =
+    siteContent.whyFireflies?.title || "A library shaped by shared reading.";
+  document.querySelector("#homePage .hero-story > .detail-text").textContent =
+    siteContent.whyFireflies?.text ||
+    "Fireflies brings books, people, and conversation together in one welcoming cultural space.";
+
+  const whyCards = document.querySelectorAll("#homePage .story-grid .detail-card");
+  if (siteContent.whyFireflies?.cards?.[0]) {
+    whyCards[0].querySelector("h3").textContent = siteContent.whyFireflies.cards[0].title;
+    whyCards[0].querySelector("p").textContent = siteContent.whyFireflies.cards[0].text;
+  }
+  if (siteContent.whyFireflies?.cards?.[1]) {
+    whyCards[1].querySelector("h3").textContent = siteContent.whyFireflies.cards[1].title;
+    whyCards[1].querySelector("p").textContent = siteContent.whyFireflies.cards[1].text;
+  }
+  document.querySelector("#homePage .story-quote p").textContent =
+    siteContent.whyFireflies?.quote ||
+    "Every shelf is a small invitation: pause here, pick something unexpected, and carry a thought outward.";
+
+  document.querySelector("#catalogPage .hero-copy .eyebrow").textContent =
+    siteContent.catalogHero?.eyebrow || "Browse The Collection";
+  document.querySelector("#catalogPage .hero-copy h1").textContent =
+    siteContent.catalogHero?.title || "Find books by title, mood, genre, or shared curiosity.";
+  document.querySelector("#catalogPage .hero-copy .hero-text").textContent =
+    siteContent.catalogHero?.text ||
+    "Start with welcoming shelves, refine by theme or availability, and open any title for a quick summary, author context, and related reading ideas.";
+
+  document.querySelector("#aboutPage .about-copy .eyebrow").textContent =
+    siteContent.about?.eyebrow || "About Fireflies";
+  document.querySelector("#aboutPage .about-copy h2").textContent =
+    siteContent.about?.title || "Books, place-making, and quiet cultural exchange.";
+  document.querySelector("#aboutPage .about-copy > .hero-text").textContent =
+    siteContent.about?.text ||
+    "Fireflies Studio Library is imagined as more than a catalog. It is a reading room, a neighbourhood cultural pause, and a growing collection that encourages people to spend time with stories, ideas, and each other.";
+
+  const aboutCards = document.querySelectorAll("#aboutPage .about-cards .detail-card");
+  if (siteContent.about?.visionTitle) {
+    aboutCards[0].querySelector("h3").textContent = siteContent.about.visionTitle;
+    aboutCards[0].querySelector("p").textContent = siteContent.about.visionText;
+  }
+  if (siteContent.about?.libraryTitle) {
+    aboutCards[1].querySelector("h3").textContent = siteContent.about.libraryTitle;
+    aboutCards[1].querySelector("p").textContent = siteContent.about.libraryText;
+  }
+  const visitCard = document.querySelector("#aboutPage .about-copy > .detail-card");
+  visitCard.querySelector("h3").textContent = siteContent.about?.visitTitle || "Visit Us";
+  visitCard.querySelector("p").textContent = siteContent.about?.visitText || "";
+
+  document.querySelector(".footer-copy").innerHTML =
+    `${siteContent.footer?.byline || "Fireflies Studio Library by"} <a href="https://www.detourodisha.com" target="_blank" rel="noreferrer">Detour Odisha</a>`;
+  const footerNotes = document.querySelectorAll(".footer-note");
+  footerNotes[0].textContent = siteContent.footer?.address || "";
+  footerNotes[1].textContent = siteContent.footer?.note || "";
 }
 
 function getAuthorFeatureScore(book) {
@@ -825,7 +892,7 @@ function getFilteredBooks() {
 function createCoverMarkup(book, large = false) {
   const imageClass = large ? "cover-image detail-image" : "cover-image";
   const imageMarkup = book.coverImage
-    ? `<img class="${imageClass}" src="${book.coverImage}" alt="Cover of ${escapeHtml(book.title)}" onerror="this.remove()" />`
+    ? `<img class="${imageClass}" src="${book.coverImage}" alt="Cover of ${escapeHtml(book.title)}" loading="${large ? "eager" : "lazy"}" decoding="async" onerror="this.remove()" />`
     : "";
   const accent = getAccent(book);
 
@@ -879,8 +946,7 @@ function renderBooks() {
     filteredBooks.length === 0 || state.currentPage >= paginated.totalPages;
 
   renderDetails(filteredBooks);
-  paginated.books.forEach(scheduleCoverLookup);
-  paginated.books.forEach(scheduleMetadataLookup);
+  scheduleBooksForCurrentView(paginated.books);
 }
 
 function buildSearchSummary(resultCountValue) {
@@ -933,8 +999,7 @@ function renderGenresView() {
       const isExpanded = Boolean(state.expandedGenres[genre]);
       const visibleItems = isExpanded ? items : items.slice(0, GENRE_PREVIEW_COUNT);
 
-      items.slice(0, 24).forEach(scheduleCoverLookup);
-      items.slice(0, 24).forEach(scheduleMetadataLookup);
+      scheduleBooksForCurrentView(items.slice(0, 12));
 
       return `
         <section class="genre-section">
@@ -1018,6 +1083,59 @@ function renderActivePage() {
     renderCuratedShelves();
     renderBookOfTheWeek();
   }
+}
+
+function initCursorEffect() {
+  const finePointer = window.matchMedia("(pointer: fine)").matches;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const brandLogo = document.querySelector(".brand-logo");
+
+  if (!cursorOrbit || !brandLogo || !finePointer || reducedMotion) {
+    return;
+  }
+  let rafId = null;
+  let active = false;
+  const target = { x: 0, y: 0 };
+  const current = { x: 0, y: 0 };
+
+  function animate() {
+    if (!active) {
+      rafId = null;
+      return;
+    }
+
+    current.x += (target.x - current.x) * 0.18;
+    current.y += (target.y - current.y) * 0.18;
+    cursorOrbit.style.transform = `translate(${current.x}px, ${current.y}px)`;
+    rafId = window.requestAnimationFrame(animate);
+  }
+
+  brandLogo.addEventListener("pointerenter", (event) => {
+    active = true;
+    target.x = event.clientX;
+    target.y = event.clientY;
+    current.x = event.clientX;
+    current.y = event.clientY;
+    cursorOrbit.classList.remove("hidden");
+
+    if (!rafId) {
+      rafId = window.requestAnimationFrame(animate);
+    }
+  });
+
+  brandLogo.addEventListener(
+    "pointermove",
+    (event) => {
+      target.x = event.clientX;
+      target.y = event.clientY;
+    },
+    { passive: true }
+  );
+
+  brandLogo.addEventListener("pointerleave", () => {
+    active = false;
+    cursorOrbit.classList.add("hidden");
+  });
 }
 
 function renderDetails(filteredBooks) {
@@ -1114,6 +1232,10 @@ function renderDetails(filteredBooks) {
 }
 
 function buildAuthorSpotlight(book) {
+  if (bookOverrides[book.title]?.authorSpotlight) {
+    return bookOverrides[book.title].authorSpotlight;
+  }
+
   const sameAuthor = books.filter((entry) => normalizeText(entry.author) === normalizeText(book.author));
   const genres = new Set(sameAuthor.map((entry) => entry.genre).filter(Boolean));
 
@@ -1132,6 +1254,10 @@ function getSimilarBooks(book) {
 }
 
 function buildWhyItStandsOut(book) {
+  if (bookOverrides[book.title]?.whyItStandsOut) {
+    return bookOverrides[book.title].whyItStandsOut;
+  }
+
   const lines = [
     book.genre ? `A strong choice for readers drawn to ${book.genre.toLowerCase()}.` : "",
     book.language ? `This edition is available in ${book.language}.` : "",
@@ -1306,10 +1432,10 @@ if (books.length > 0) {
   buildGenreOptions();
   renderThemeChips();
   renderHeroStats();
+  applySiteContent();
   attachEvents();
   renderActivePage();
-  books.forEach(scheduleCoverLookup);
-  books.forEach(scheduleMetadataLookup);
+  initCursorEffect();
 } else {
   genreFilter.innerHTML = '<option value="all">All</option>';
   resultCount.textContent = "0 results";
