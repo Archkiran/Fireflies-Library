@@ -90,6 +90,20 @@
         </div>
       </section>
 
+      <section class="home-feature page-section" id="homeCurationSection">
+        <div class="catalog-panel featured-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Start Here</p>
+              <h2>Easy ways to begin browsing</h2>
+            </div>
+            <p class="result-count">Curated for first-time visitors</p>
+          </div>
+          <div class="theme-chip-row" id="homeThemeRow"></div>
+          <div class="curated-shelves" id="curatedShelves"></div>
+        </div>
+      </section>
+
       <section class="hero page-section hidden" id="catalogPage">
         <div class="hero-copy">
           <p class="eyebrow">Browse The Collection</p>
@@ -136,6 +150,11 @@
                 <option value="reference-only">Reference Only</option>
               </select>
             </label>
+          </div>
+
+          <div class="quick-themes">
+            <p class="control-label">Quick Themes</p>
+            <div class="theme-chip-row" id="themeChipRow"></div>
           </div>
         </aside>
       </section>
@@ -241,14 +260,28 @@
       </section>
 
       <footer class="site-footer">
-        <p class="footer-copy">Fireflies Studio Library by <a href="https://www.detourodisha.com" target="_blank" rel="noreferrer">Detour Odisha</a></p>
+        <div>
+          <p class="footer-copy">Fireflies Studio Library by <a href="https://www.detourodisha.com" target="_blank" rel="noreferrer">Detour Odisha</a></p>
+          <p class="footer-note">405, Ghatikia - Nh5, Kalinga Vihar LIG, Kalinganagar, Bhubaneswar, Subudhipur, Odisha 751028</p>
+          <p class="footer-note">Open for slow browsing, shared reading, and thoughtful borrowing.</p>
+        </div>
         <div class="footer-links">
           <a href="https://www.instagram.com/firefliesbydetour/" target="_blank" rel="noreferrer" aria-label="Fireflies Instagram">
-            <span class="social-icon">◎</span>
+            <span class="social-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img" focusable="false">
+                <path
+                  d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5a4.25 4.25 0 0 0 4.25 4.25h8.5a4.25 4.25 0 0 0 4.25-4.25v-8.5a4.25 4.25 0 0 0-4.25-4.25h-8.5Zm8.88 1.75a1.12 1.12 0 1 1 0 2.24 1.12 1.12 0 0 1 0-2.24ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.5A3.5 3.5 0 1 0 12 15.5 3.5 3.5 0 0 0 12 8.5Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </span>
             Instagram
           </a>
           <a href="https://maps.app.goo.gl/KM6omcqNd8kn2epbA" target="_blank" rel="noreferrer">
             Location
+          </a>
+          <a href="https://www.detourodisha.com" target="_blank" rel="noreferrer">
+            Detour Odisha
           </a>
         </div>
       </footer>
