@@ -12179,5 +12179,83 @@ window.BOOKS_DATA = [
       "summary" : "English language edition.",
       "language" : "English",
       "notes" : ""
+   },
+   {
+      "id" : 469,
+      "catalogCode" : "FFL-469",
+      "title" : "OSHO Intelligence",
+      "author" : "Osho",
+      "genre" : "Spirituality & Philosophy",
+      "language" : "English",
+      "publisher" : "",
+      "published" : "",
+      "isbn" : "",
+      "translator" : "",
+      "copies" : 1,
+      "status" : "available",
+      "coverImage" : "",
+      "borrowedBy" : "",
+      "borrowDate" : "",
+      "returnDate" : "",
+      "location" : "",
+      "condition" : "",
+      "donatedBy" : "",
+      "notes" : "",
+      "summary" : "A concise English-language edition exploring intelligence through Osho's reflective and philosophical lens.",
+      "tags" : [
+         "English"
+      ]
+   },
+   {
+      "id" : 470,
+      "catalogCode" : "FFL-470",
+      "title" : "OSHO Awareness",
+      "author" : "Osho",
+      "genre" : "Spirituality & Philosophy",
+      "language" : "English",
+      "publisher" : "",
+      "published" : "",
+      "isbn" : "",
+      "translator" : "",
+      "copies" : 1,
+      "status" : "available",
+      "coverImage" : "",
+      "borrowedBy" : "",
+      "borrowDate" : "",
+      "returnDate" : "",
+      "location" : "",
+      "condition" : "",
+      "donatedBy" : "",
+      "notes" : "",
+      "summary" : "An English-language spiritual philosophy title centered on awareness, attention, and inner clarity.",
+      "tags" : [
+         "English"
+      ]
+   },
+   {
+      "id" : 471,
+      "catalogCode" : "FFL-471",
+      "title" : "OSHO Intuition",
+      "author" : "Osho",
+      "genre" : "Spirituality & Philosophy",
+      "language" : "English",
+      "publisher" : "",
+      "published" : "",
+      "isbn" : "",
+      "translator" : "",
+      "copies" : 1,
+      "status" : "available",
+      "coverImage" : "",
+      "borrowedBy" : "",
+      "borrowDate" : "",
+      "returnDate" : "",
+      "location" : "",
+      "condition" : "",
+      "donatedBy" : "",
+      "notes" : "",
+      "summary" : "A short English-language volume on intuition, insight, and self-understanding in Osho's voice.",
+      "tags" : [
+         "English"
+      ]
    }
 ]
