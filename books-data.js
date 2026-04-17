@@ -12244,7 +12244,7 @@ window.BOOKS_DATA = [
       "isbn" : "",
       "translator" : "",
       "copies" : 1,
-      "status" : "available",
+      "status" : "borrowed",
       "coverImage" : "",
       "borrowedBy" : "",
       "borrowDate" : "",
@@ -12254,6 +12254,32 @@ window.BOOKS_DATA = [
       "donatedBy" : "",
       "notes" : "",
       "summary" : "A short English-language volume on intuition, insight, and self-understanding in Osho's voice.",
+      "tags" : [
+         "English"
+      ]
+   },
+   {
+      "id" : 472,
+      "catalogCode" : "FFL-472",
+      "title" : "Life in the Age of Exploration",
+      "author" : "Reader's Digest",
+      "genre" : "General Knowledge",
+      "language" : "English",
+      "publisher" : "",
+      "published" : "",
+      "isbn" : "",
+      "translator" : "",
+      "copies" : 1,
+      "status" : "available",
+      "coverImage" : "",
+      "borrowedBy" : "",
+      "borrowDate" : "",
+      "returnDate" : "",
+      "location" : "",
+      "condition" : "",
+      "donatedBy" : "",
+      "notes" : "",
+      "summary" : "An English-language general knowledge title from Reader's Digest focused on discovery, travel, and the age of exploration.",
       "tags" : [
          "English"
       ]
